@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// CORE IDENTITY & ACCESS MODELS
+// ==========================================
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  isActive     Boolean  @default(true)
+  roleId       String
+  employeeId   String?  @unique
+
+  role         Role      @relation(fields: [roleId], references: [id])
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email])
+  @@index([roleId])
+  @@map("users")
+}
+
+model Role {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+
+  users       User[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model Department {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+
+  employees   Employee[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("departments")
+}
+
+// ==========================================
+// EMPLOYEE MODEL (IBM HR Dataset Mapping)
+// ==========================================
+
+model Employee {
+  id                       String  @id @default(uuid())
+  employeeNumber           Int     @unique
+
+  // Personal Info
+  age                      Int
+  gender                   String
+  maritalStatus            String
+  over18                   Boolean @default(true)
+
+  // Job Info
+  departmentId             String
+  jobRole                  String
+  jobLevel                 Int
+  businessTravel           String
+  overTime                 Boolean
+
+  // Education
+  education                Int
+  educationField           String
+
+  // Compensation
+  monthlyIncome            Int
+  monthlyRate              Int
+  dailyRate                Int
+  hourlyRate               Int
+  percentSalaryHike        Int
+  stockOptionLevel         Int
+
+  // Performance & Satisfaction
+  performanceRating        Int
+  jobSatisfaction          Int
+  environmentSatisfaction  Int
+  relationshipSatisfaction Int
+  workLifeBalance          Int
+  jobInvolvement           Int
+
+  // Work History
+  totalWorkingYears        Int
+  numCompaniesWorked       Int
+  yearsAtCompany           Int
+  yearsInCurrentRole       Int
+  yearsSinceLastPromotion  Int
+  yearsWithCurrManager     Int
+
+  // Other IBM Fields
+  distanceFromHome         Int
+  employeeCount            Int     @default(1)
+  standardHours            Int     @default(80)
+  trainingTimesLastYear    Int
+
+  // Outcome
+  attrition                Boolean @default(false)
+
+  // Relations
+  department               Department @relation(fields: [departmentId], references: [id])
+  user                     User?
+  
+  prediction               Prediction?
+  predictionHistory        PredictionHistory[]
+
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@index([departmentId])
+  @@index([jobRole])
+  @@index([attrition])
+  @@index([performanceRating])
+  @@map("employees")
+}
+
+// ==========================================
+// PREDICTION MODELS
+// ==========================================
+
+model Prediction {
+  id               String   @id @default(uuid())
+  employeeId       String   @unique
+  prediction       String
+  probability      Float
+  confidence       Float
+  riskLevel        String
+  riskFactors      Json
+  retentionFactors Json
+  recommendations  Json
+  modelUsed        String
+  
+  employee         Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("predictions")
+}
+
+model PredictionHistory {
+  id               String   @id @default(uuid())
+  employeeId       String
+  prediction       String
+  probability      Float
+  confidence       Float
+  riskLevel        String
+  riskFactors      Json
+  retentionFactors Json
+  recommendations  Json
+  modelUsed        String
+  
+  employee         Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  createdAt        DateTime @default(now())
+
+  @@index([employeeId])
+  @@index([createdAt])
+  @@map("prediction_history")
+}
