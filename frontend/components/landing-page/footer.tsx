@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap, ExternalLink, Share2, Globe2 } from "lucide-react";
+import { Zap, ExternalLink, Globe2 } from "lucide-react";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -62,7 +62,6 @@ export function Footer() {
             <div className="flex items-center gap-2">
               {[
                 { icon: ExternalLink, label: "GitHub" },
-                { icon: Share2, label: "Twitter" },
                 { icon: Globe2, label: "LinkedIn" },
               ].map(({ icon: Icon, label }) => (
                 <a
@@ -93,7 +92,7 @@ export function Footer() {
             },
             {
               title: "Legal",
-              links: ["Privacy Policy", "Terms of Service", "GDPR", "SOC2", "Cookie Policy"],
+              links: ["Privacy Policy", "Terms"],
             },
           ].map((col) => (
             <div key={col.title}>
@@ -128,6 +127,19 @@ export function Footer() {
           }}
         />
 
+        {/* Built With section */}
+        <div className="flex justify-center mb-8">
+          <p className="text-sm text-muted-foreground/80 text-center flex items-center flex-wrap justify-center gap-1">
+            Built with <span className="text-red-500 animate-pulse mx-1">❤️</span> using 
+            <span className="font-medium text-white">Next.js</span>, 
+            <span className="font-medium text-white">React</span>, 
+            <span className="font-medium text-white">Python</span>, 
+            <span className="font-medium text-white">FastAPI</span>, 
+            <span className="font-medium text-white">PostgreSQL</span> and 
+            <span className="font-medium text-white">Machine Learning</span>.
+          </p>
+        </div>
+
         {/* Bottom bar */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
@@ -139,7 +151,7 @@ export function Footer() {
                 className="w-1.5 h-1.5 rounded-full animate-pulse"
                 style={{ background: "oklch(0.72 0.18 145)" }}
               />
-              All systems operational
+              All Systems Operational
             </div>
             <span style={{ color: "oklch(1 0 0 / 0.2)" }}>·</span>
             <span>v2.4.1</span>
