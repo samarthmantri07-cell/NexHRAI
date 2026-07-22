@@ -573,6 +573,6 @@ This project is licensed under the **MIT License** — see the [LICENSE](./LICEN
 
 ### ⭐ If you find NexHRAI useful, consider giving it a star!
 
-**Made with 🧠 AI, ☕ Coffee, and a passion for better HR technology.**
+**Made with 🧠 AI, ☕ Coffee, and a passion for better HR technology - by Samarth.**
 
 </div>
