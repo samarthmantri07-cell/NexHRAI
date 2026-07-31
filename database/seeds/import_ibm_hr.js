@@ -3,13 +3,8 @@ const path = require('path');
 const csv = require('../../backend/node_modules/csv-parser');
 const { PrismaClient } = require('../../backend/node_modules/@prisma/client');
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: "postgresql://postgres:nexhr123@localhost:5432/nexhrai_db?schema=public"
-    }
-  }
-});
+require('../../backend/node_modules/dotenv').config({ path: path.resolve(__dirname, '../../backend/.env') });
+const prisma = new PrismaClient();
 
 const DATASET_PATH = path.resolve(__dirname, '../../datasets/raw/WA_Fn-UseC_-HR-Employee-Attrition.csv');
 
