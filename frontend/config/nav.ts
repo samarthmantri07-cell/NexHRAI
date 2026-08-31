@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, UserMinus, DollarSign, CalendarOff, Briefcase, UserPlus, Settings } from "lucide-react";
+import { LayoutDashboard, Users, UserMinus, DollarSign, CalendarOff, Briefcase, UserPlus, Settings, FileText } from "lucide-react";
 
 export const NAV_LINKS = [
   { href: "/dashboard", label: "Executive Overview", icon: LayoutDashboard },
@@ -8,5 +8,6 @@ export const NAV_LINKS = [
   { href: "/dashboard/leave", label: "Leave Analytics", icon: CalendarOff },
   { href: "/dashboard/workforce", label: "Workforce Analytics", icon: Briefcase },
   { href: "/dashboard/recruitment", label: "Recruitment Analytics", icon: UserPlus },
+  { href: "/dashboard/reports", label: "Automated Reports", icon: FileText },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

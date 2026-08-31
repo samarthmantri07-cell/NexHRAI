@@ -9,10 +9,10 @@ export class PredictionController {
     try {
       const { employeeId } = req.params;
       const prediction = await predictionService.generatePrediction(employeeId);
-      res.status(200).json({ success: true, data: prediction });
+      return res.status(200).json({ success: true, data: prediction });
     } catch (error: any) {
       console.error('generatePrediction Error:', error);
-      res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+      return res.status(500).json({ success: false, message: error.message || 'Internal server error' });
     }
   }
 
@@ -23,10 +23,10 @@ export class PredictionController {
       if (!prediction) {
         return res.status(404).json({ success: false, message: 'Prediction not found for this employee' });
       }
-      res.status(200).json({ success: true, data: prediction });
+      return res.status(200).json({ success: true, data: prediction });
     } catch (error: any) {
       console.error('getLatestPrediction Error:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }
 
@@ -34,30 +34,30 @@ export class PredictionController {
     try {
       const { employeeId } = req.params;
       const history = await predictionService.getPredictionHistory(employeeId);
-      res.status(200).json({ success: true, data: history });
+      return res.status(200).json({ success: true, data: history });
     } catch (error: any) {
       console.error('getPredictionHistory Error:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }
 
-  async getHighRiskEmployees(req: Request, res: Response) {
+  async getHighRiskEmployees(_req: Request, res: Response) {
     try {
       const employees = await predictionService.getHighRiskEmployees();
-      res.status(200).json({ success: true, data: employees });
+      return res.status(200).json({ success: true, data: employees });
     } catch (error: any) {
       console.error('getHighRiskEmployees Error:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }
 
-  async getDashboardStats(req: Request, res: Response) {
+  async getDashboardStats(_req: Request, res: Response) {
     try {
       const stats = await predictionService.getDashboardStats();
-      res.status(200).json({ success: true, data: stats });
+      return res.status(200).json({ success: true, data: stats });
     } catch (error: any) {
       console.error('getDashboardStats Error:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }
 }

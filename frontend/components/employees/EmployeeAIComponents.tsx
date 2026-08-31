@@ -138,6 +138,12 @@ export function EmployeePredictionCell({
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [step, setStep] = useState<PredictStep>("idle");
 
+  const isScanning = step === "scanning";
+  const isNeural = step === "neural";
+  const isThinking = step === "thinking";
+  const isCounting = step === "counting";
+  const isTheatrical = isScanning || isNeural || isThinking || isCounting;
+
   const handlePredict = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Start theatrical sequence
@@ -147,7 +153,12 @@ export function EmployeePredictionCell({
         setTimeout(() => setStep("neural"), 800);
         setTimeout(() => setStep("thinking"), 2000);
         setTimeout(() => setStep("counting"), 3800);
+        setTimeout(() => setStep("done"), 5600);
       },
+      onError: (err) => {
+        console.error("Prediction generation failed", err);
+        setStep("idle"); // reset state on error
+      }
     });
   };
 
@@ -160,12 +171,9 @@ export function EmployeePredictionCell({
     );
   }
 
-  if (error || !prediction) {
-    const isScanning = step === "scanning";
-    const isNeural = step === "neural";
-    const isThinking = step === "thinking";
-
-    if (isScanning || isNeural || isThinking) {
+  // If there's an ongoing prediction theatrical step OR no prediction yet
+  if (error || !prediction || isTheatrical) {
+    if (isTheatrical) {
       return (
         <motion.div
           className="relative flex items-center gap-2 px-3 py-1.5 rounded-xl overflow-hidden text-xs font-semibold"

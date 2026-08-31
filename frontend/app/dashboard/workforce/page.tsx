@@ -5,17 +5,10 @@ import { KpiCard } from "@/components/ui/custom/kpi-card";
 import { ChartContainer } from "@/components/ui/custom/chart-container";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { BarChart } from "@/components/charts/bar-chart";
-import { Users, Globe, GraduationCap, TrendingUp } from "lucide-react";
+import { Users, Globe, GraduationCap, TrendingUp, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
-import { useGenderDistribution } from "@/hooks/useAnalytics";
+import { useGenderDistribution, useEmployeeStats, useEducationDistribution } from "@/hooks/useAnalytics";
 import { useHighRiskEmployees } from "@/hooks/usePredictions";
-
-const educationLevel = [
-  { level: "Bachelor's", count: 850 },
-  { level: "Master's", count: 420 },
-  { level: "PhD", count: 85 },
-  { level: "Other", count: 115 },
-];
 
 function LoadingSkeleton() {
   return (
@@ -30,12 +23,25 @@ function LoadingSkeleton() {
 }
 
 export default function WorkforcePage() {
-  const { data: genderDist, isLoading: genderLoading } = useGenderDistribution();
-  const { data: highRiskEmployees, isLoading: highRiskLoading } = useHighRiskEmployees();
+  const { data: genderDist, isLoading: genderLoading, isError: genderError } = useGenderDistribution();
+  const { data: highRiskEmployees, isLoading: highRiskLoading, isError: highRiskError } = useHighRiskEmployees();
+  const { data: employeeStats, isLoading: statsLoading, isError: statsError } = useEmployeeStats();
+  const { data: educationDataAPI, isLoading: eduLoading, isError: eduError } = useEducationDistribution();
 
-  if (genderLoading || highRiskLoading) return <LoadingSkeleton />;
+  if (genderLoading || highRiskLoading || statsLoading || eduLoading) return <LoadingSkeleton />;
 
-  const genderData = genderDist?.map((g) => ({ group: g.gender, count: g.count })) || [];
+  if (genderError || highRiskError || statsError || eduError) {
+     return (
+        <div className="flex flex-col items-center justify-center h-96 space-y-4">
+           <AlertTriangle className="w-12 h-12 text-destructive" />
+           <h2 className="text-xl font-semibold">Failed to load workforce data</h2>
+           <p className="text-muted-foreground">Please check your connection and try again.</p>
+        </div>
+     );
+  }
+
+  const genderData = genderDist?.map((g) => ({ group: g.group, count: g.count })) || [];
+  const educationLevel = educationDataAPI?.map((e) => ({ level: e.level, count: e.count })) || [];
 
   const roleRiskMap: Record<string, number> = {};
   if (highRiskEmployees) {
@@ -48,6 +54,18 @@ export default function WorkforcePage() {
     .map(([role, count]) => ({ role, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
+    
+  // Using generic "remote worker" metric based on logic if absent from real DB
+  // Because 'remote' isn't explicitly in the standard IBM dataset, we leave a placeholder or map it.
+  // We'll calculate a proxy or use average Experience for now since the prompt said no mock data.
+  // Let's replace "Remote Workers" with "Avg Experience" since we fetch averageExperience from employeeStats.
+  const totalEmployees = employeeStats?.totalEmployees || 0;
+  const avgAge = employeeStats?.averageAge || 0;
+  const avgExp = employeeStats?.averageExperience || 0;
+  
+  // For female representation, let's dynamically calculate from genderData
+  const femaleCount = genderData.find(g => g.group.toLowerCase() === 'female')?.count || 0;
+  const femaleRep = totalEmployees > 0 ? (femaleCount / totalEmployees) * 100 : 0;
 
   return (
     <div className="space-y-8">
@@ -57,21 +75,33 @@ export default function WorkforcePage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <KpiCard delay={0.1} title="Total Headcount" value={1470} trend={2.3} icon={<Users className="w-4 h-4" />} iconColor="oklch(0.70 0.22 265)" />
-        <KpiCard delay={0.2} title="Female Representation" value={46.2} format="percent" trend={1.5} icon={<TrendingUp className="w-4 h-4" />} iconColor="oklch(0.68 0.22 300)" />
-        <KpiCard delay={0.3} title="Remote Workers" value={62} format="percent" trend={8.4} icon={<Globe className="w-4 h-4" />} iconColor="oklch(0.72 0.20 200)" />
-        <KpiCard delay={0.4} title="Avg. Education Level" value={3.2} format="raw" icon={<GraduationCap className="w-4 h-4" />} iconColor="oklch(0.72 0.18 145)" />
+        <KpiCard delay={0.1} title="Total Headcount" value={totalEmployees} icon={<Users className="w-4 h-4" />} iconColor="oklch(0.70 0.22 265)" />
+        <KpiCard delay={0.2} title="Female Representation" value={femaleRep} format="percent" icon={<TrendingUp className="w-4 h-4" />} iconColor="oklch(0.68 0.22 300)" />
+        <KpiCard delay={0.3} title="Avg. Experience (Yrs)" value={avgExp} format="raw" icon={<Globe className="w-4 h-4" />} iconColor="oklch(0.72 0.20 200)" />
+        <KpiCard delay={0.4} title="Avg. Age" value={avgAge} format="raw" icon={<GraduationCap className="w-4 h-4" />} iconColor="oklch(0.72 0.18 145)" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ChartContainer delay={0.5} title="Gender Diversity" subtitle="Distribution across workforce">
-          <DonutChart data={genderData} nameKey="group" dataKey="count" colors={["oklch(0.68 0.22 300)", "oklch(0.70 0.22 265)", "oklch(0.72 0.18 145)"]} />
+           {genderData.length > 0 ? (
+              <DonutChart data={genderData} nameKey="group" dataKey="count" colors={["oklch(0.68 0.22 300)", "oklch(0.70 0.22 265)", "oklch(0.72 0.18 145)"]} />
+           ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">No data available</div>
+           )}
         </ChartContainer>
         <ChartContainer delay={0.6} title="Education Distribution" subtitle="Level breakdown">
-          <BarChart data={educationLevel} xAxisKey="level" dataKeys={["count"]} colors={["oklch(0.68 0.22 300)"]} />
+           {educationLevel.length > 0 ? (
+              <BarChart data={educationLevel} xAxisKey="level" dataKeys={["count"]} colors={["oklch(0.68 0.22 300)"]} />
+           ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">No data available</div>
+           )}
         </ChartContainer>
         <ChartContainer delay={0.7} title="High Risk by Role (AI)" subtitle="Top 5 at-risk roles">
-          <DonutChart data={roleRiskData} nameKey="role" dataKey="count" colors={["oklch(0.68 0.22 25)", "oklch(0.76 0.18 75)", "oklch(0.72 0.18 145)", "oklch(0.70 0.22 265)", "oklch(0.68 0.22 300)"]} />
+           {roleRiskData.length > 0 ? (
+              <DonutChart data={roleRiskData} nameKey="role" dataKey="count" colors={["oklch(0.68 0.22 25)", "oklch(0.76 0.18 75)", "oklch(0.72 0.18 145)", "oklch(0.70 0.22 265)", "oklch(0.68 0.22 300)"]} />
+           ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">No data available</div>
+           )}
         </ChartContainer>
       </div>
     </div>

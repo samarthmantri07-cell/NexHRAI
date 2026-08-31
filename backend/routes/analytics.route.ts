@@ -51,4 +51,10 @@ router.get('/employee/stats', analyticsController.getEmployeeStats);
 router.get('/employee/recent', analyticsController.getRecentEmployees);
 router.get('/employee/experience', analyticsController.getExperienceDistribution);
 
+// Leave Dashboard
+router.get('/leave/analytics', analyticsController.getLeaveAnalytics);
+
+// Recruitment Dashboard
+router.get('/recruitment/analytics', analyticsController.getRecruitmentAnalytics);
+
 export default router;

@@ -311,3 +311,21 @@ export const getExperienceDistribution = async () => {
   });
   return Object.entries(buckets).map(([group, count]) => ({ group, count }));
 };
+
+export const getLeaveAnalytics = async () => {
+  // Real leave data (e.g. sick, vacation, absence tracking) does not exist in the IBM HR dataset schema.
+  // Returning an explicit unavailable state.
+  return {
+    unavailable: true,
+    message: "Leave data unavailable. Please integrate attendance tracking system."
+  };
+};
+
+export const getRecruitmentAnalytics = async () => {
+  // Real recruitment pipeline data (candidates, stages, time-to-hire) does not exist in the schema.
+  // Returning an explicit unavailable state.
+  return {
+    unavailable: true,
+    message: "Recruitment data unavailable. Please integrate ATS module."
+  };
+};

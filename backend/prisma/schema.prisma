@@ -180,3 +180,19 @@ model PredictionHistory {
   @@index([createdAt])
   @@map("prediction_history")
 }
+
+// ==========================================
+// PLATFORM CONFIGURATION MODELS
+// ==========================================
+
+model Settings {
+  id                    String   @id @default(uuid())
+  workspaceName         String   @default("NexHR-AI Workspace")
+  emailAlertsEnabled    Boolean  @default(true)
+  weeklyDigestEnabled   Boolean  @default(true)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("settings")
+}

@@ -7,17 +7,8 @@ import { LineChart } from "@/components/charts/line-chart";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { Users, UserMinus, DollarSign, Clock, Brain, AlertTriangle, TrendingUp, Shield } from "lucide-react";
 import { motion } from "framer-motion";
-import { useOverviewAnalytics, useDepartmentBreakdown } from "@/hooks/useAnalytics";
+import { useOverviewAnalytics, useDepartmentBreakdown, useWorkforceGrowth } from "@/hooks/useAnalytics";
 import { usePredictionDashboard } from "@/hooks/usePredictions";
-
-const headcountData = [
-  { month: "Jan", count: 1420 },
-  { month: "Feb", count: 1435 },
-  { month: "Mar", count: 1440 },
-  { month: "Apr", count: 1450 },
-  { month: "May", count: 1462 },
-  { month: "Jun", count: 1470 },
-];
 
 function LoadingSkeleton() {
   return (
@@ -46,13 +37,26 @@ function LoadingSkeleton() {
 }
 
 export default function OverviewPage() {
-  const { data: overview, isLoading: overviewLoading } = useOverviewAnalytics();
-  const { data: deptBreakdown, isLoading: deptLoading } = useDepartmentBreakdown();
+  const { data: overview, isLoading: overviewLoading, isError: overviewError } = useOverviewAnalytics();
+  const { data: deptBreakdown, isLoading: deptLoading, isError: deptError } = useDepartmentBreakdown();
+  const { data: workforceGrowth, isLoading: growthLoading, isError: growthError } = useWorkforceGrowth();
   const { data: aiStats } = usePredictionDashboard();
 
-  if (overviewLoading || deptLoading) return <LoadingSkeleton />;
+  if (overviewLoading || deptLoading || growthLoading) return <LoadingSkeleton />;
 
-  const deptData = deptBreakdown?.map((d) => ({ name: d.department, count: d.count })) || [];
+  // Display minimal generic error state if something fundamentally failed to load
+  if (overviewError || deptError || growthError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <AlertTriangle className="w-12 h-12 text-destructive" />
+        <h2 className="text-xl font-semibold">Failed to load analytics</h2>
+        <p className="text-muted-foreground">Please check your connection and try again.</p>
+      </div>
+    );
+  }
+
+  const deptData = deptBreakdown?.map((d) => ({ name: d.name, count: d.count })) || [];
+  const headcountData = workforceGrowth?.map((g) => ({ year: g.year, count: g.count })) || [];
 
   return (
     <div className="space-y-8">
@@ -74,26 +78,26 @@ export default function OverviewPage() {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          <KpiCard
-            delay={0.1} title="Total Employees" value={overview?.totalEmployees || 0}
-            trend={2.3} icon={<Users className="w-4 h-4" />}
-            iconColor="oklch(0.70 0.22 265)"
-          />
-          <KpiCard
-            delay={0.2} title="Attrition Rate" value={overview?.attritionRate || 0}
-            format="percent" trend={-0.8} icon={<UserMinus className="w-4 h-4" />}
-            iconColor="oklch(0.68 0.22 25)"
-          />
-          <KpiCard
-            delay={0.3} title="Avg. Monthly Income" value={overview?.averageSalary || 0}
-            format="currency" trend={1.2} icon={<DollarSign className="w-4 h-4" />}
-            iconColor="oklch(0.72 0.18 145)"
-          />
-          <KpiCard
-            delay={0.4} title="Avg. Tenure (Years)" value={overview?.averageTenure || 0}
-            format="raw" trend={0.5} icon={<Clock className="w-4 h-4" />}
-            iconColor="oklch(0.76 0.18 75)"
-          />
+          <KpiCard 
+            delay={0.1} title="Total Employees" value={overview?.totalEmployees || 0} 
+            icon={<Users className="w-4 h-4" />} 
+            iconColor="oklch(0.70 0.22 265)" 
+        />
+          <KpiCard 
+            delay={0.2} title="Attrition Rate" value={overview?.attritionRate || 0} 
+            format="percent" icon={<UserMinus className="w-4 h-4" />} 
+            iconColor="oklch(0.68 0.22 25)" 
+        />
+          <KpiCard 
+            delay={0.3} title="Avg. Monthly Income" value={overview?.averageSalary || 0} 
+            format="currency" icon={<DollarSign className="w-4 h-4" />} 
+            iconColor="oklch(0.72 0.18 145)" 
+        />
+          <KpiCard 
+            delay={0.4} title="Avg. Tenure (Years)" value={overview?.averageTenure || 0} 
+            format="raw" icon={<Clock className="w-4 h-4" />} 
+            iconColor="oklch(0.76 0.18 75)" 
+        />
         </div>
       </div>
 
@@ -138,9 +142,13 @@ export default function OverviewPage() {
           <ChartContainer
             delay={0.5}
             title="Headcount Trend"
-            subtitle="6-month rolling headcount"
+            subtitle="Historical headcount growth"
           >
-            <LineChart data={headcountData} xAxisKey="month" dataKeys={["count"]} />
+            {headcountData.length > 0 ? (
+              <LineChart data={headcountData} xAxisKey="year" dataKeys={["count"]} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">No data available</div>
+            )}
           </ChartContainer>
         </div>
         <div className="lg:col-span-1">
@@ -149,7 +157,11 @@ export default function OverviewPage() {
             title="Department Distribution"
             subtitle="By headcount"
           >
-            <DonutChart data={deptData} nameKey="name" dataKey="count" />
+             {deptData.length > 0 ? (
+                <DonutChart data={deptData} nameKey="name" dataKey="count" />
+             ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">No data available</div>
+             )}
           </ChartContainer>
         </div>
       </div>

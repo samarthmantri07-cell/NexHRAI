@@ -127,3 +127,19 @@ export const getExperienceDistribution = catchAsync(async (_req: Request, res: R
   const data = await analyticsService.getExperienceDistribution();
   sendSuccess(res, data);
 });
+
+// ==========================================
+// 6. LEAVE DASHBOARD (Derived)
+// ==========================================
+export const getLeaveAnalytics = catchAsync(async (_req: Request, res: Response) => {
+  const data = await analyticsService.getLeaveAnalytics();
+  sendSuccess(res, data);
+});
+
+// ==========================================
+// 7. RECRUITMENT DASHBOARD (Derived)
+// ==========================================
+export const getRecruitmentAnalytics = catchAsync(async (_req: Request, res: Response) => {
+  const data = await analyticsService.getRecruitmentAnalytics();
+  sendSuccess(res, data);
+});

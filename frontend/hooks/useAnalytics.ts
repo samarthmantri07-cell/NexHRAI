@@ -28,3 +28,52 @@ export const useAttritionBreakdown = () => {
     queryFn: analyticsService.getAttritionBreakdown,
   });
 };
+
+export const useWorkforceGrowth = () => {
+  return useQuery({
+    queryKey: ['analytics', 'workforce-growth'],
+    queryFn: analyticsService.getWorkforceGrowth,
+  });
+};
+
+export const useEmployeeStats = () => {
+  return useQuery({
+    queryKey: ['analytics', 'employee-stats'],
+    queryFn: analyticsService.getEmployeeStats,
+  });
+};
+
+export const useEducationDistribution = () => {
+  return useQuery({
+    queryKey: ['analytics', 'education-distribution'],
+    queryFn: analyticsService.getEducationDistribution,
+  });
+};
+
+export const useAttritionTrends = () => {
+  return useQuery({
+    queryKey: ['analytics', 'attrition-trends'],
+    queryFn: analyticsService.getAttritionTrends,
+  });
+};
+
+export const useSalaryBands = () => {
+  return useQuery({
+    queryKey: ['analytics', 'salary-bands'],
+    queryFn: analyticsService.getSalaryBands,
+  });
+};
+
+export const useLeaveAnalytics = () => {
+  return useQuery({
+    queryKey: ['analytics', 'leave'],
+    queryFn: analyticsService.getLeaveAnalytics,
+  });
+};
+
+export const useRecruitmentAnalytics = () => {
+  return useQuery({
+    queryKey: ['analytics', 'recruitment'],
+    queryFn: analyticsService.getRecruitmentAnalytics,
+  });
+};

@@ -5,20 +5,11 @@ import { KpiCard } from "@/components/ui/custom/kpi-card";
 import { ChartContainer } from "@/components/ui/custom/chart-container";
 import { AreaChart } from "@/components/charts/area-chart";
 import { BarChart } from "@/components/charts/bar-chart";
-import { AlertOctagon, BrainCircuit, Target, ShieldAlert } from "lucide-react";
+import { AlertOctagon, BrainCircuit, Target, ShieldAlert, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
-import { useAttritionBreakdown } from "@/hooks/useAnalytics";
+import { useAttritionBreakdown, useAttritionTrends, useOverviewAnalytics } from "@/hooks/useAnalytics";
 import { useHighRiskEmployees } from "@/hooks/usePredictions";
 import { EmployeePredictionCell } from "@/components/employees/EmployeeAIComponents";
-
-const attritionHistory = [
-  { month: "Jan", rate: 18.2 },
-  { month: "Feb", rate: 17.5 },
-  { month: "Mar", rate: 17.8 },
-  { month: "Apr", rate: 16.9 },
-  { month: "May", rate: 16.5 },
-  { month: "Jun", rate: 16.1 },
-];
 
 function LoadingSkeleton() {
   return (
@@ -33,13 +24,35 @@ function LoadingSkeleton() {
 }
 
 export default function AttritionPage() {
-  const { data: attritionBreakdown, isLoading: breakdownLoading } = useAttritionBreakdown();
-  const { data: highRiskEmployees, isLoading: highRiskLoading } = useHighRiskEmployees();
+  const { data: attritionBreakdown, isLoading: breakdownLoading, isError: breakdownError } = useAttritionBreakdown();
+  const { data: highRiskEmployees, isLoading: highRiskLoading, isError: highRiskError } = useHighRiskEmployees();
+  const { data: attritionTrends, isLoading: trendsLoading, isError: trendsError } = useAttritionTrends();
+  const { data: overview, isLoading: overviewLoading, isError: overviewError } = useOverviewAnalytics();
 
-  if (breakdownLoading) return <LoadingSkeleton />;
+  if (breakdownLoading || trendsLoading || overviewLoading) return <LoadingSkeleton />;
+
+  if (breakdownError || highRiskError || trendsError || overviewError) {
+     return (
+        <div className="flex flex-col items-center justify-center h-96 space-y-4">
+           <AlertTriangle className="w-12 h-12 text-destructive" />
+           <h2 className="text-xl font-semibold">Failed to load attrition data</h2>
+           <p className="text-muted-foreground">Please check your connection and try again.</p>
+        </div>
+     );
+  }
 
   const breakdownData =
-    attritionBreakdown?.map((d) => ({ factor: d.department, count: d.attritionCount })) || [];
+    attritionBreakdown?.map((d) => ({ factor: d.factor, count: d.count })) || [];
+    
+  const trendsData =
+    attritionTrends?.map((d) => ({ month: d.month, rate: d.rate })) || [];
+
+  const currentAttritionRate = overview?.attritionRate || 0;
+  
+  // Predict attrition based on high risk proportion (if totalEmployees > 0)
+  const totalEmp = overview?.totalEmployees || 0;
+  const highRiskCount = highRiskEmployees?.length || 0;
+  const predictedAttrition = totalEmp > 0 ? (highRiskCount / totalEmp) * 100 : 0;
 
   return (
     <div className="space-y-8">
@@ -50,18 +63,26 @@ export default function AttritionPage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <KpiCard delay={0.1} title="Current Attrition Rate" value={16.1} format="percent" trend={-0.4} icon={<AlertOctagon className="w-4 h-4" />} iconColor="oklch(0.68 0.22 25)" />
-        <KpiCard delay={0.2} title="Predicted Attrition (Q3)" value={15.5} format="percent" trend={-0.6} icon={<BrainCircuit className="w-4 h-4" />} iconColor="oklch(0.70 0.22 265)" />
-        <KpiCard delay={0.3} title="High-Risk Employees" value={highRiskEmployees?.length || 0} format="raw" icon={<ShieldAlert className="w-4 h-4" />} iconColor="oklch(0.76 0.18 75)" />
-        <KpiCard delay={0.4} title="Intervention Success Rate" value={68} format="percent" trend={5.2} icon={<Target className="w-4 h-4" />} iconColor="oklch(0.72 0.18 145)" />
+        <KpiCard delay={0.1} title="Current Attrition Rate" value={currentAttritionRate} format="percent" icon={<AlertOctagon className="w-4 h-4" />} iconColor="oklch(0.68 0.22 25)" />
+        <KpiCard delay={0.2} title="Predicted Attrition Risk" value={predictedAttrition} format="percent" icon={<BrainCircuit className="w-4 h-4" />} iconColor="oklch(0.70 0.22 265)" />
+        <KpiCard delay={0.3} title="High-Risk Employees" value={highRiskCount} format="raw" icon={<ShieldAlert className="w-4 h-4" />} iconColor="oklch(0.76 0.18 75)" />
+        <KpiCard delay={0.4} title="Total Employees" value={totalEmp} format="raw" icon={<Target className="w-4 h-4" />} iconColor="oklch(0.72 0.18 145)" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartContainer delay={0.5} title="Attrition Rate Trend" subtitle="6-month historical">
-          <AreaChart data={attritionHistory} xAxisKey="month" dataKeys={["rate"]} colors={["oklch(0.68 0.22 25)"]} />
+        <ChartContainer delay={0.5} title="Attrition Rate by Tenure" subtitle="Historical analysis">
+           {trendsData.length > 0 ? (
+              <AreaChart data={trendsData} xAxisKey="month" dataKeys={["rate"]} colors={["oklch(0.68 0.22 25)"]} />
+           ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">No data available</div>
+           )}
         </ChartContainer>
         <ChartContainer delay={0.6} title="Attrition by Department" subtitle="Count by department">
-          <BarChart data={breakdownData} layout="vertical" xAxisKey="factor" dataKeys={["count"]} colors={["oklch(0.76 0.18 75)"]} />
+           {breakdownData.length > 0 ? (
+              <BarChart data={breakdownData} layout="vertical" xAxisKey="factor" dataKeys={["count"]} colors={["oklch(0.76 0.18 75)"]} />
+           ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">No data available</div>
+           )}
         </ChartContainer>
       </div>
 
